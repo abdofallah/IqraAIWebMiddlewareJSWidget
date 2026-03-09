@@ -2,6 +2,14 @@
 
 A highly customizable, framework-agnostic SDK for embedding Voice AI capabilities into any website. It supports "inline form" mode for quick integration and "headless" mode for complete UI control.
 
+## ⚙️ Required Backend Middleware (C# ASP.NET Core)
+
+This frontend widget is designed to communicate with a secure backend to protect your API keys and handle high-traffic concurrency (queueing). We have built an official, production-ready middleware for this exact purpose.
+
+👉 **[Get the Iqra AI Web Middleware (C# ASP.NET Core) here &rarr;](https://github.com/abdofallah/IqraAIWebSessionMiddleware)**
+
+---
+
 ## 🚀 Features
 
 *   **Universal Compatibility:** Works with Vanilla JS, React, Vue, WordPress, and more.
