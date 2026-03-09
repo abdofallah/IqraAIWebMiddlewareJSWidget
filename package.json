@@ -1,5 +1,5 @@
 {
-  "name": "iqraaiwebwidgetsdk",
+  "name": "iqraaiwebmiddlewarejswidget",
   "version": "1.0.0",
   "main": "./dist/voice-ai-widget.umd.js",
   "types": "./dist/index.d.ts",
