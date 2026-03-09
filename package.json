@@ -1,0 +1,24 @@
+{
+  "name": "iqraaiwebwidgetsdk",
+  "version": "1.0.0",
+  "main": "./dist/voice-ai-widget.umd.js",
+  "types": "./dist/index.d.ts",
+  "scripts": {
+    "dev": "vite ./example",
+    "build": "vite build && tsc"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "devDependencies": {
+    "@types/node": "^24.10.1",
+    "typescript": "^5.9.3",
+    "vite": "^6.4.1",
+    "vite-plugin-dts": "^4.5.4"
+  },
+  "dependencies": {
+    "@microsoft/signalr": "^9.0.6",
+    "wave-resampler": "^1.0.0"
+  }
+}

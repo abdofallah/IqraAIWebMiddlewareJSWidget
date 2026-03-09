@@ -1,0 +1,70 @@
+.vaw-container {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    border: 1px solid #e0e0e0;
+    padding: 20px;
+    border-radius: 8px;
+    background-color: #ffffff;
+    max-width: 350px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.vaw-form-group {
+    margin-bottom: 15px;
+}
+
+.vaw-form-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-size: 14px;
+    color: #333;
+    font-weight: 500;
+}
+
+.vaw-form-group input {
+    width: 100%;
+    padding: 10px;
+    box-sizing: border-box;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 16px;
+}
+
+.vaw-button {
+    width: 100%;
+    padding: 12px;
+    border: none;
+    border-radius: 4px;
+    background-color: #007bff;
+    color: white;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.vaw-button:hover {
+    background-color: #0056b3;
+}
+
+.vaw-button:disabled {
+    background-color: #cccccc;
+    cursor: not-allowed;
+}
+
+.vaw-status-message {
+    margin-bottom: 15px;
+    color: #555;
+    text-align: center;
+    min-height: 20px;
+    /* Reserve space to prevent layout shift */
+}
+
+.vaw-hangup-button {
+    background-color: #dc3545;
+    /* Red color */
+    margin-top: 10px;
+}
+
+.vaw-hangup-button:hover {
+    background-color: #c82333;
+}
