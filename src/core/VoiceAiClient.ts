@@ -157,6 +157,8 @@ export class VoiceAiClient {
 
         var requestPayload = {
             ...payload,
+            campaignId: this.options.campaignId,
+            regionId: this.options.regionId,
             transportType: this.options.transportType,
             audioConfiguration: {
                 inputEncodingType: this.audioConfig.inputEncodingType,

@@ -41,6 +41,8 @@ export interface AudioConfiguration {
 
 export interface WidgetOptions {
     middlewareUrl: string;
+    campaignId: string;
+    regionId: string;
     transportType?: TransportType;
     audioConfig?: Partial<AudioConfiguration>;
     container?: string | HTMLElement;

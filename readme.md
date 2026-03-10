@@ -57,7 +57,11 @@ const client = VoiceAiWidget.init({
     // 2. Where to render the widget (Required for UI mode)
     container: '#voice-widget-container',
 
-    // 3. Define the form fields
+    // 3. Campaign routing details (Required)
+    campaignId: 'IqraWebsiteCampaign',
+    regionId: 'EU-DE',
+
+    // 4. Define the form fields
     formFields: [
         { 
             name: 'firstName', 
@@ -84,7 +88,9 @@ If you want to build your own button and form, simply omit the `container` optio
 ```javascript
 // Initialize without a container
 const client = VoiceAiWidget.init({
-    middlewareUrl: 'https://api.your-middleware.com'
+    middlewareUrl: 'https://api.your-middleware.com',
+    campaignId: 'IqraWebsiteCampaign',
+    regionId: 'us-east-1'
 });
 
 // Listen to state changes to update your custom UI
@@ -120,6 +126,8 @@ The `init(options)` method accepts the following configuration object:
 | Option | Type | Required | Description |
 | :--- | :--- | :--- | :--- |
 | `middlewareUrl` | `string` | **Yes** | The base URL of your C# Middleware API (e.g., `https://api.myapp.com`). |
+| `campaignId` | `string` | **Yes** | The ID of the targeted Voice AI platform campaign routing configuration. |
+| `regionId` | `string` | **Yes** | The geographic availability zone for initiating the AI Agent. |
 | `container` | `string` \| `HTMLElement` | No | CSS selector or DOM element. If provided, the UI Manager is initialized. |
 | `formFields` | `FormField[]` | No | Array of field definitions for the inline form. |
 

@@ -8,6 +8,8 @@ const middlewareUrl = 'https://localhost:7166';
 init({
     // Core Config
     middlewareUrl: middlewareUrl,
+    campaignId: 'IqraWebsiteCampaign',
+    regionId: 'EU-DE',
     transportType: TransportType.WebSocket,
     audioConfig: {
         inputEncodingType: AudioEncodingType.PCM,
@@ -37,6 +39,8 @@ const headlessStatus = document.getElementById('headless-status')!;
 const headlessClient = init({
     // Core Config
     middlewareUrl: middlewareUrl,
+    campaignId: 'IqraWebsiteCampaign',
+    regionId: 'EU-DE',
     transportType: TransportType.WebSocket,
     audioConfig: {
         inputEncodingType: AudioEncodingType.PCM,
