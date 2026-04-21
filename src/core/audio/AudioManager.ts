@@ -6,8 +6,9 @@ export class AudioManager {
 
     // Input State
     private localStream: MediaStream | null = null;
-    private inputProcessor: ScriptProcessorNode | null = null;
+    private inputProcessor: AudioWorkletNode | null = null;
     private audioInput: MediaStreamAudioSourceNode | null = null;
+    private workletUrl: string | null = null;
 
     // Output State (Jitter Buffer)
     private nextStartTime: number = 0;
@@ -30,8 +31,9 @@ export class AudioManager {
     public async startInput(): Promise<void> {
         try {
             this.localStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-            this.setupInputProcessing();
+            await this.setupInputProcessing();
         } catch (error) {
+            console.log(error);
             throw new Error("Microphone access denied.");
         }
     }
@@ -73,7 +75,6 @@ export class AudioManager {
         // 3. Jitter Buffer Logic
         if (!this.isPlaying) {
             // BUFFERING STATE: Wait until threshold met
-            // We compare seconds vs seconds
             if (this.bufferedDuration >= (this.config.bufferThresholdMs / 1000)) {
                 console.log(`Jitter Buffer Full (${this.bufferedDuration.toFixed(3)}s). Starting Playback.`);
                 this.isPlaying = true;
@@ -99,7 +100,6 @@ export class AudioManager {
             // Drift Correction: If we fell behind, jump ahead
             if (this.nextStartTime < this.audioContext.currentTime) {
                 // We ran dry! (Underrun)
-                // console.warn("Buffer Underrun! Resyncing..."); // Uncomment for debugging
                 this.nextStartTime = this.audioContext.currentTime + 0.01;
             }
 
@@ -116,17 +116,69 @@ export class AudioManager {
         }
     }
 
-    private setupInputProcessing(): void {
+    private async setupInputProcessing(): Promise<void> {
         if (!this.audioContext || !this.localStream) return;
 
+        // Resume context if it's suspended (browser auto-play policies)
+        if (this.audioContext.state === 'suspended') {
+            await this.audioContext.resume();
+        }
+
         this.audioInput = this.audioContext.createMediaStreamSource(this.localStream);
-        this.inputProcessor = this.audioContext.createScriptProcessor(4096, 1, 1);
 
-        this.inputProcessor.onaudioprocess = (e) => {
-            const inputData = e.inputBuffer.getChannelData(0);
-            const inputRate = e.inputBuffer.sampleRate;
+        // 1. Generate the AudioWorklet dynamically using a Blob
+        if (!this.workletUrl) {
+            const workletCode = `
+                class MicrophoneProcessor extends AudioWorkletProcessor {
+                    constructor(options) {
+                        super();
+                        // Target exactly 20ms based on the hardware's sample rate
+                        this.bufferSize = options.processorOptions.bufferSize || 1024;
+                        this.buffer = new Float32Array(this.bufferSize);
+                        this.pointer = 0;
+                    }
 
-            // 1. Resample to Target
+                    process(inputs, outputs, parameters) {
+                        const input = inputs[0];
+                        if (input && input.length > 0) {
+                            const channelData = input[0];
+                            for (let i = 0; i < channelData.length; i++) {
+                                this.buffer[this.pointer++] = channelData[i];
+                                
+                                // When we reach 20ms of accumulated data, send it to the main thread
+                                if (this.pointer >= this.bufferSize) {
+                                    this.port.postMessage(this.buffer.slice(0)); // Send a copy
+                                    this.pointer = 0;
+                                }
+                            }
+                        }
+                        return true; // Keep processor alive
+                    }
+                }
+                registerProcessor('microphone-processor', MicrophoneProcessor);
+            `;
+            const blob = new Blob([workletCode], { type: 'application/javascript' });
+            this.workletUrl = URL.createObjectURL(blob);
+            await this.audioContext.audioWorklet.addModule(this.workletUrl);
+        }
+
+        // 2. Calculate Exact 20ms frame count for the current Context Sample Rate
+        const contextSampleRate = this.audioContext.sampleRate;
+        const exact20msFrames = Math.floor(contextSampleRate * 0.02); // backend runs at 20ms frames
+
+        // 3. Create the Worklet Node
+        this.inputProcessor = new AudioWorkletNode(this.audioContext, 'microphone-processor', {
+            processorOptions: {
+                bufferSize: exact20msFrames
+            }
+        });
+
+        // 4. Handle messages from the audio thread
+        this.inputProcessor.port.onmessage = (event) => {
+            const inputData: Float32Array = event.data;
+            const inputRate = this.audioContext!.sampleRate;
+
+            // 1. Resample to Target Config Rate
             let processedData = inputData;
             if (inputRate !== this.config.inputSampleRate) {
                 processedData = new Float32Array(resample(inputData, inputRate, this.config.inputSampleRate));
@@ -134,7 +186,6 @@ export class AudioManager {
 
             // 2. Encode based on configured Input Bits Per Sample
             let pcmData: ArrayBuffer;
-
             switch (this.config.inputBitsPerSample) {
                 case 8:
                     pcmData = this.encodeFloat32ToUint8(processedData);
@@ -143,11 +194,10 @@ export class AudioManager {
                     pcmData = this.encodeFloat32ToInt16(processedData);
                     break;
                 case 32:
-                    // Send raw Float32
+                    // @ts-expect-error
                     pcmData = processedData.buffer;
                     break;
                 default:
-                    // Default to 16-bit
                     pcmData = this.encodeFloat32ToInt16(processedData);
                     break;
             }
@@ -156,17 +206,17 @@ export class AudioManager {
             this.onAudioCaptured(pcmData);
         };
 
-        // Mute connection to prevent echo
-        const gain = this.audioContext.createGain();
-        gain.gain.value = 0;
+        // Connect the microphone to the Worklet. 
         this.audioInput.connect(this.inputProcessor);
-        this.inputProcessor.connect(gain);
-        gain.connect(this.audioContext.destination);
     }
 
     public stop(): void {
         this.localStream?.getTracks().forEach(t => t.stop());
-        this.inputProcessor?.disconnect();
+
+        if (this.inputProcessor) {
+            this.inputProcessor.disconnect();
+            this.inputProcessor.port.close();
+        }
         this.audioInput?.disconnect();
 
         // Reset Buffer
@@ -181,9 +231,7 @@ export class AudioManager {
         const buffer = new ArrayBuffer(samples.length);
         const view = new Uint8Array(buffer);
         for (let i = 0; i < samples.length; i++) {
-            // Clamp -1.0 to 1.0
             const s = Math.max(-1, Math.min(1, samples[i]));
-            // Convert to 0-255
             view[i] = Math.floor(((s + 1) / 2) * 255);
         }
         return buffer;
@@ -194,7 +242,6 @@ export class AudioManager {
         const view = new Int16Array(buffer);
         for (let i = 0; i < samples.length; i++) {
             const s = Math.max(-1, Math.min(1, samples[i]));
-            // Convert to -32768 to 32767
             view[i] = s < 0 ? s * 0x8000 : s * 0x7FFF;
         }
         return buffer;
@@ -206,7 +253,6 @@ export class AudioManager {
         const uint8 = new Uint8Array(data);
         const float32 = new Float32Array(uint8.length);
         for (let i = 0; i < uint8.length; i++) {
-            // Convert 0-255 to -1.0 to 1.0
             float32[i] = (uint8[i] - 128) / 128.0;
         }
         return float32;
@@ -216,7 +262,6 @@ export class AudioManager {
         const int16 = new Int16Array(data);
         const float32 = new Float32Array(int16.length);
         for (let i = 0; i < int16.length; i++) {
-            // Convert -32768-32767 to -1.0 to 1.0
             float32[i] = int16[i] / 32768.0;
         }
         return float32;

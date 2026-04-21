@@ -40,7 +40,7 @@ export class VoiceAiClient {
             outputBitsPerSample: options.audioConfig?.outputBitsPerSample || 16,
 
             // for internal websockets
-            bufferThresholdMs: options.audioConfig?.bufferThresholdMs || 200
+            bufferThresholdMs: options.audioConfig?.bufferThresholdMs || 20
         };
 
         // 2. Initialize Transport

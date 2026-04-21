@@ -9,7 +9,7 @@ init({
     // Core Config
     middlewareUrl: middlewareUrl,
     campaignId: 'IqraWebsiteCampaign',
-    regionId: 'EU-DE',
+    regionId: 'OM-MCT',
     transportType: TransportType.WebSocket,
     audioConfig: {
         inputEncodingType: AudioEncodingType.PCM,
@@ -20,7 +20,7 @@ init({
         outputSampleRate: 24000,
         outputBitsPerSample: 16,
 
-        bufferThresholdMs: 100
+        bufferThresholdMs: 20
     },
     // UI Config
     container: '#my-widget-container',
@@ -40,18 +40,18 @@ const headlessClient = init({
     // Core Config
     middlewareUrl: middlewareUrl,
     campaignId: 'IqraWebsiteCampaign',
-    regionId: 'EU-DE',
+    regionId: 'OM-MCT',
     transportType: TransportType.WebSocket,
     audioConfig: {
         inputEncodingType: AudioEncodingType.PCM,
-        inputSampleRate: 24000,
+        inputSampleRate: 16000,
         inputBitsPerSample: 16,
 
         outputEncodingType: AudioEncodingType.PCM,
-        outputSampleRate: 24000,
+        outputSampleRate: 16000,
         outputBitsPerSample: 16,
 
-        bufferThresholdMs: 100
+        bufferThresholdMs: 60
     }
 });
 
@@ -78,7 +78,8 @@ headlessButton.addEventListener('click', () => {
     headlessClient.startSession({
         dynamicVariables: {
             source: 'headlessButton',
-            Name: "John Doe"
+            FirstName: "Abdullah",
+            LastName: "bin Amir"
         },
         metadata: {
             timestamp: new Date().toISOString()
